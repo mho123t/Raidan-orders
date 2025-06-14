@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>طلب جديد - مطعم ريدان</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body dir="rtl">
+  <h2>طلب جديد</h2>
+  <form id="orderForm">
+    <label>الاسم:</label><br>
+    <input type="text" id="name"><br>
+
+    <label>رقم الجوال:</label><br>
+    <input type="text" id="phone"><br>
+
+    <label>العنوان:</label><br>
+    <input type="text" id="address"><br>
+
+    <label>الفرع:</label><br>
+    <select id="branch">
+      <option value="دبي">فرع دبي</option>
+      <option value="الشارقة">فرع الشارقة</option>
+    </select><br>
+
+    <label>الطلب:</label><br>
+    <textarea id="items"></textarea><br>
+
+    <button type="submit">إرسال الطلب</button>
+  </form>
+
+  <p id="result"></p>
+
+  <script>
+    // إعداد Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8zqzbD56Ts3wjOySYm4Blq2qh93CZZMk",
+      authDomain: "raidan-3857c.firebaseapp.com",
+      projectId: "raidan-3857c",
+      storageBucket: "raidan-3857c.firebasestorage.app",
+      messagingSenderId: "827435463070",
+      appId: "1:827435463070:web:37fe023b378b1a7d33a68f",
+      measurementId: "G-7EZG1W4QCV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("orderForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const phone = document.getElementById("phone").value;
+      const address = document.getElementById("address").value;
+      const branch = document.getElementById("branch").value;
+      const items = document.getElementById("items").value;
+
+      db.collection("Orders").add({
+        customer_name: name,
+        phone: phone,
+        address: address,
+        branch: branch,
+        items: items,
+        status: "قيد التجهيز",
+        timestamp: new Date()
+      }).then(() => {
+        document.getElementById("result").textContent = "تم إرسال الطلب بنجاح!";
+      }).catch(error => {
+        document.getElementById("result").textContent = "حدث خطأ: " + error;
+      });
+    });
+  </script>
+</body>
+</html>
