@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>لوحة التحكم - مطعم ريدان</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: Arial; direction: rtl; padding: 20px; background: #f5f5f5; }
+    h2 { color: #c0392b; }
+    select, button { margin: 5px 0; padding: 5px; }
+    .order { background: #fff; margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>لوحة تحكم الطلبات</h2>
+
+  <label>اختر الفرع:</label>
+  <select id="branchSelector">
+    <option value="دبي">فرع دبي</option>
+    <option value="الشارقة">فرع الشارقة</option>
+  </select>
+
+  <div id="orders"></div>
+
+  <audio id="notificationSound" src="https://www.soundjay.com/buttons/sounds/button-29.mp3" preload="auto"></audio>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8zqzbD56Ts3wjOySYm4Blq2qh93CZZMk",
+      authDomain: "raidan-3857c.firebaseapp.com",
+      projectId: "raidan-3857c",
+      storageBucket: "raidan-3857c.firebasestorage.app",
+      messagingSenderId: "827435463070",
+      appId: "1:827435463070:web:37fe023b378b1a7d33a68f",
+      measurementId: "G-7EZG1W4QCV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const ordersDiv = document.getElementById("orders");
+    const branchSelector = document.getElementById("branchSelector");
+    const sound = document.getElementById("notificationSound");
+
+    let lastDocIds = new Set();
+
+    function renderOrders(branch) {
+      db.collection("Orders").where("branch", "==", branch).orderBy("timestamp", "desc")
+        .onSnapshot(snapshot => {
+          ordersDiv.innerHTML = "";
+          snapshot.docChanges().forEach(change => {
+            const data = change.doc.data();
+            const id = change.doc.id;
+
+            if (change.type === "added" && !lastDocIds.has(id)) {
+              sound.play();
+              lastDocIds.add(id);
+            }
+
+            const div = document.createElement("div");
+            div.className = "order";
+            div.innerHTML = `
+              <strong>الاسم:</strong> ${data.customer_name}<br>
+              <strong>الجوال:</strong> ${data.phone}<br>
+              <strong>العنوان:</strong> ${data.address}<br>
+              <strong>الطلب:</strong> ${data.items}<br>
+              <strong>الحالة:</strong> ${data.status}<br>
+              <button onclick="updateStatus('${id}', 'قيد التوصيل')">قيد التوصيل</button>
+              <button onclick="updateStatus('${id}', 'تم التوصيل')">تم التوصيل</button>
+              <button onclick="deleteOrder('${id}')">🗑 حذف</button>
+            `;
+            ordersDiv.appendChild(div);
+          });
+        });
+    }
+
+    function updateStatus(id, status) {
+      db.collection("Orders").doc(id).update({ status });
+    }
+
+    function deleteOrder(id) {
+      if (confirm("هل أنت متأكد من حذف الطلب؟")) {
+        db.collection("Orders").doc(id).delete();
+      }
+    }
+
+    branchSelector.addEventListener("change", () => {
+      lastDocIds.clear();
+      renderOrders(branchSelector.value);
+    });
+
+    // أول تشغيل
+    renderOrders(branchSelector.value);
+  </script>
+</body>
+</html>
